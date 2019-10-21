@@ -67,13 +67,8 @@ public class ClientTCPConnection : BaseConnection
 
     private void OnConnect(IAsyncResult asr)
     {
-        m_Client.EndConnect(asr);
+        m_Socket.EndConnect(asr);
         Debug.Log("【客户端】连接成功！");
-    }
-
-    public void Send<T>(int command, T pack)
-    {
-        m_NetPackage.SendPackage<T>(this, command, pack);
     }
 
 

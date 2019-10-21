@@ -14,6 +14,7 @@
     public void Start()
     {
         m_Connection = new ClientTCPConnection();
+        m_Connection.CheckingCode = m_CheckingCode;
     }
 
     public void Content(string host,int port)

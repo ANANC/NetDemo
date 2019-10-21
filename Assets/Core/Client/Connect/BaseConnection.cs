@@ -11,25 +11,25 @@ public abstract class BaseConnection : IConnection
 
     protected INetPackage m_NetPackage = null;        //包体解析器
     protected NetBuffer m_NetBuffer = new NetBuffer(MAX_READ);           //网络缓存池
-    protected Socket m_Client = null;              //sockect
+    protected Socket m_Socket = null;              //sockect
     protected ConnectNotificationDelegate m_ConnectNotificationDelegate = null;   //连接状态事件
 
     public void SetSocket(Socket socket)
     {
-        m_Client = socket;
-        m_Client.BeginReceive(m_NetBuffer.bytes, m_NetBuffer.length, 0, SocketFlags.None, new AsyncCallback(OnRead),
+        m_Socket = socket;
+        m_Socket.BeginReceive(m_NetBuffer.bytes, m_NetBuffer.length, m_NetBuffer.Capacity(), SocketFlags.None, new AsyncCallback(OnRead),
             null);
     }
 
     public void Close()
     {
-        if (m_Client != null)
+        if (m_Socket != null)
         {
             try
             {
-                if (m_Client.Connected)
+                if (m_Socket.Connected)
                 {
-                    m_Client.Close();
+                    m_Socket.Close();
                     SendNotification(ConnectNotificationType.Disconnect, "关闭连接");
                 }
             }
@@ -37,16 +37,16 @@ public abstract class BaseConnection : IConnection
             {
                 Debug.LogWarning(ex.Message);
             }
-            m_Client = null;
+            m_Socket = null;
         }
     }
 
     public bool IsConnected()
     {
         bool bRet = false;
-        if (m_Client != null && m_Client.Connected)
+        if (m_Socket != null && m_Socket.Connected)
         {
-            bRet = !((m_Client.Poll(1000, SelectMode.SelectRead) && (m_Client.Available == 0)) || !m_Client.Connected);
+            bRet = !((m_Socket.Poll(1000, SelectMode.SelectRead) && (m_Socket.Available == 0)) || !m_Socket.Connected);
         }
         return bRet;
     }
@@ -73,11 +73,11 @@ public abstract class BaseConnection : IConnection
             writer.Write(head);
             writer.Write(body, 0, length);
             writer.Flush();
-            if (m_Client != null && m_Client.Connected)
+            if (m_Socket != null && m_Socket.Connected)
             {
                 byte[] payload = ms.ToArray();
                 //向缓冲区写入数据
-                m_Client.BeginSend(payload, 0, payload.Length, SocketFlags.None, new AsyncCallback(OnWrite), null);
+                m_Socket.BeginSend(payload, 0, payload.Length, SocketFlags.None, new AsyncCallback(OnWrite), null);
             }
             else
             {
@@ -92,10 +92,10 @@ public abstract class BaseConnection : IConnection
     {
         try
         {
-            if (m_Client != null && m_Client.Connected)
+            if (m_Socket != null && m_Socket.Connected)
             {
                 {
-                    m_Client.EndSend(asr);
+                    m_Socket.EndSend(asr);
                 }
             }
             else
@@ -153,12 +153,12 @@ public abstract class BaseConnection : IConnection
     protected void OnRead(IAsyncResult asr)
     {
         int bytesRead = 0;
-        if (m_Client != null && m_Client.Connected)
+        if (m_Socket != null && m_Socket.Connected)
         {
             try
             {
                 //读取字节流到缓冲区
-                bytesRead = m_Client.EndReceive(asr);
+                bytesRead = m_Socket.EndReceive(asr);
                 if (bytesRead < 4)
                 {
                     //包尺寸有问题，断线处理
@@ -167,7 +167,7 @@ public abstract class BaseConnection : IConnection
                 }
 
                 ReceiveMessage(m_NetBuffer.bytes, bytesRead); //分析数据包内容，抛给逻辑层
-                m_Client.BeginReceive(m_NetBuffer.bytes, m_NetBuffer.length,
+                m_Socket.BeginReceive(m_NetBuffer.bytes, m_NetBuffer.length,
                     m_NetBuffer.Capacity() - m_NetBuffer.length, SocketFlags.None, new AsyncCallback(OnRead), null);
             }
             catch (Exception ex)
@@ -198,5 +198,10 @@ public abstract class BaseConnection : IConnection
     public void SetNetPackage(INetPackage netPackage)
     {
         m_NetPackage = netPackage;
+    }
+
+    public void Send<T>(int command, T pack)
+    {
+        m_NetPackage.SendPackage<T>(this, command, pack);
     }
 }

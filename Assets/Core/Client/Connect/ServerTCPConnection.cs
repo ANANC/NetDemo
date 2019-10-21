@@ -13,7 +13,7 @@ public class ServerTCPConnection : BaseConnection
 
     public void Connect(Socket socket)
     {
-        GoogleProtoNetBody body = new ServerNetBody();
+        ServerNetBody body = new ServerNetBody();
 
         NetPackage netPackage = new NetPackage();
         netPackage.SetNetBody(body);
@@ -22,5 +22,7 @@ public class ServerTCPConnection : BaseConnection
         SetNetPackage(netPackage);
 
         SetSocket(socket);
+
+        body.SetHost(this);
     }
 }

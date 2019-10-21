@@ -6,6 +6,13 @@ using Google.Protobuf;
 
 public class ServerNetBody : GoogleProtoNetBody
 {
+    private ServerTCPConnection m_Host;
+
+    public void SetHost(ServerTCPConnection host)
+    {
+        m_Host = host;
+    }
+
     protected override void RegisterParsers()
     {
         AddParser((int)CMD.Respond, Respond.Parser);
@@ -22,5 +29,7 @@ public class ServerNetBody : GoogleProtoNetBody
     {
         Respond msg = message as Respond;
         Debug.Log("服务器接收："+msg.Content);
+
+        m_Host.Send<Respond>((int)CMD.Respond, msg);
     }
 }

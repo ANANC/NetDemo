@@ -69,6 +69,7 @@ public class Server
     {
         Socket socket = m_Server.EndAccept(ar);
         ServerTCPConnection clientConnection = new ServerTCPConnection();
+        clientConnection.CheckingCode = m_CheckingCode;
         clientConnection.Connect(socket);
         m_Clients.Add(clientConnection);
 
@@ -77,8 +78,14 @@ public class Server
 
      //关闭项目终止线程,停止服务器.
      private void OnApplicationQuit()
-     {
+    {
+        m_Server.Close();
         m_ListenThread.Abort();
         m_ListenThread.IsBackground = true;//关闭线程
      }
+
+    public void SendToTargetClient<T>(ServerTCPConnection client,int command, T pack)
+    {
+        client.Send<T>(command, pack);
+    }
 }

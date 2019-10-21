@@ -5,7 +5,7 @@ public class NetPackage : INetPackage
 {
     private INetBody m_NetBody = null;                          //包体业务处理
     private byte[] m_SendBuffer = new byte[1024 * 1024 * 1];    //缓冲区
-    private byte[] m_HeadBuffer = new byte[11];                 //快速检验byte,加密算法byte,压缩byte,CRC检验int,包体编号int
+    private byte[] m_HeadBuffer = new byte[5];                 //快速检验byte
     private byte[] m_HandleBuffer = null;                       //包头
     private int m_PackageIndex = 1;                             //包体编号
 
