@@ -99,7 +99,7 @@ public class GoogleProtoNetBody : INetBody
         m_ReceiveParserDic.Add(command, parser);
     }
 
-    protected void AddReceiveDelegate(int command, MessageReceiveDelegate receiveDelegate)
+    public void AddReceiveDelegate(int command, MessageReceiveDelegate receiveDelegate)
     {
         m_ReceiveDelegateDic.Add(command, receiveDelegate);
     }

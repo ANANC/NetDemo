@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Msg.C2G;
 public class NetManager : MonoBehaviour
 {
@@ -11,14 +9,12 @@ public class NetManager : MonoBehaviour
     private readonly byte CHECKINGCODE = 123;
 
     private Client m_Client;
-    private Server m_Server;
 
     void Start()
     {
-        m_Server = new Server();
-        m_Server.Port = PORT;
-        m_Server.CheckingCode = CHECKINGCODE;
-        m_Server.Start();
+        Server.Instance.Port = PORT;
+        Server.Instance.CheckingCode = CHECKINGCODE;
+        Server.Instance.Start();
 
         m_Client = new Client();
         m_Client.CheckingCode = CHECKINGCODE;
@@ -27,14 +23,14 @@ public class NetManager : MonoBehaviour
 
     void Update()
     {
-        m_Server.Update();
+        Server.Instance.Update();
         m_Client.Update();
     }
 
     private void OnDestroy()
     {
         m_Client.Destroy();
-        m_Server.Destroy();
+        Server.Instance.Destroy();
     }
 
     public void ClientContent()

@@ -16,7 +16,7 @@ public enum ConnectNotificationType
     Exception
 }
 
-public static class ClientNetUtils
+public static class NetUtils
 {
     //写入格式，和服务器要匹配
     public static void WriteIntToBytes(int value, byte[] bytes, ref int offset)

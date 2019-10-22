@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Msg.G2C;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -8,6 +9,20 @@ using static NetManager;
 
 public class Server
 {
+    private Server() { }
+    private static Server m_Instace;
+    public static Server Instance
+    {
+        get
+        {
+            if(m_Instace == null)
+            {
+                m_Instace = new Server();
+            }
+            return m_Instace;
+        }
+    }
+
     private int m_Port;
     public int Port
     {
@@ -69,8 +84,7 @@ public class Server
     {
         Socket socket = m_Server.EndAccept(ar);
         ServerTCPConnection clientConnection = new ServerTCPConnection();
-        clientConnection.CheckingCode = m_CheckingCode;
-        clientConnection.Connect(socket);
+        clientConnection.Connect( socket, m_CheckingCode);
         m_Clients.Add(clientConnection);
 
         Debug.Log("连接上客户端！");
@@ -84,8 +98,16 @@ public class Server
         m_ListenThread.IsBackground = true;//关闭线程
      }
 
-    public void SendToTargetClient<T>(ServerTCPConnection client,int command, T pack)
+    private void SendToTargetClient<T>(ServerTCPConnection client,int command, T pack)
     {
         client.Send<T>(command, pack);
     }
+
+    //-- 业务
+    public void RespondMessage(ServerTCPConnection client, Respond message)
+    {
+        Debug.Log("服务器接收：" + message.Content);
+        SendToTargetClient<Respond>(client, (int)CMD.Respond, message);
+    }
+
 }

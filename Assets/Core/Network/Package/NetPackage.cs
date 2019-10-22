@@ -27,14 +27,14 @@ public class NetPackage : INetPackage
         int dwStartOffset = offset;
 
         //快速校验码
-        byte checkingCode = ClientNetUtils.ReadByteFromBytes(bytes, ref offset);
+        byte checkingCode = NetUtils.ReadByteFromBytes(bytes, ref offset);
         if (!checkingCode.Equals(m_CheckingCode))
         {
             return "ReadPackage Failed , CheckingCode Is Incorrect.";
         }
 
         //本次包的编号
-        int packageID = ClientNetUtils.ReadIntFromBytes(bytes, ref offset);
+        int packageID = NetUtils.ReadIntFromBytes(bytes, ref offset);
 
         m_HandleBuffer = new byte[length - (offset - dwStartOffset)];
         Array.Copy(bytes, offset, m_HandleBuffer, 0, m_HandleBuffer.Length);
@@ -71,10 +71,10 @@ public class NetPackage : INetPackage
         Array.Copy(m_SendBuffer, 0, m_HandleBuffer, 0, bodySize);
 
         //快速校验码
-        ClientNetUtils.WriteByteToBytes(m_CheckingCode, m_HeadBuffer, ref headSize);
+        NetUtils.WriteByteToBytes(m_CheckingCode, m_HeadBuffer, ref headSize);
         
         //本次包的编号
-        ClientNetUtils.WriteIntToBytes(m_PackageIndex++, m_HeadBuffer, ref headSize);
+        NetUtils.WriteIntToBytes(m_PackageIndex++, m_HeadBuffer, ref headSize);
 
         connection.WriteMessage(m_HeadBuffer, m_HandleBuffer, m_HandleBuffer.Length);
         return true;

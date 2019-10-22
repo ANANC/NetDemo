@@ -43,7 +43,7 @@ public class ClientTCPConnection : BaseConnection
         else
         {
             // IPV6连接
-            addr = ClientNetUtils.GetIpAddress(host);
+            addr = NetUtils.GetIpAddress(host);
             Debug.LogWarning(string.Format(">>>>>>>>> ip = {0}, address family = {1} ", addr.ToString(), addr.AddressFamily));
             socket = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
         }

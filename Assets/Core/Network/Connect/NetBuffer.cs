@@ -30,7 +30,7 @@ public class NetBuffer
 
     public int ReadInt()
     {
-        return ClientNetUtils.ReadIntFromBytes(m_ByteBuffer, ref m_ByteBufferIndex);
+        return NetUtils.ReadIntFromBytes(m_ByteBuffer, ref m_ByteBufferIndex);
     }
 
     public byte[] bytes
