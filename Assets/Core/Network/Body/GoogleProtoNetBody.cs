@@ -94,7 +94,7 @@ public class GoogleProtoNetBody : INetBody
     protected virtual void RegisterParsers() { }
     protected virtual void RegisterReceiver() { }
 
-    protected void AddParser(int command, MessageParser parser)
+    public void AddParser(int command, MessageParser parser)
     {
         m_ReceiveParserDic.Add(command, parser);
     }
