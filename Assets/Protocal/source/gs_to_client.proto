@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package msg.g2c;
+
+//////////////////////////////////////// 协议号 ////////////////////////////////////////
+
+enum CMD {
+    CMD_INVALID = 0;
+    CMD_AUTH_RSP = 200;
+    CMD_SMESSAGE_RSP = 201;
+};
+
+//////////////////////////////////////// 消息 ////////////////////////////////////////
+
+// 用户登录认证响应
+message AuthRsp {
+    string user_id = 1; // 用户ID
+}
+
+// 信息响应
+message SMESSAGERsp {
+    string client_message = 1; // 信息
+}

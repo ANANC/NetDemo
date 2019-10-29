@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using Msg.C2G;
-public class NetManager : MonoBehaviour
+public class NetTestMgr : MonoBehaviour
 {
-    public delegate void ReceiveStrCallback(string content);
+    public delegate void ShowStrContent(bool isServer,string content);
+    public static ShowStrContent ShowStrContentEvent;
 
     private readonly string HOST = "127.0.0.1";
     private readonly int PORT = 8220;
@@ -38,10 +39,18 @@ public class NetManager : MonoBehaviour
         m_Client.Content(HOST, PORT);
     }
 
+
+    public void ClientSend<T>(int command, T pack)
+    {
+        m_Client.Send<T>(command, pack);
+    }
+
     public void ClientSend(string message)
     {
-        MESSAGE pack = new MESSAGE();
-        pack.Content = message;
-        m_Client.Send<MESSAGE>((int)CMD.Message, pack);
+        Msg.C2G.CMESSAGEReq pack = new Msg.C2G.CMESSAGEReq();
+        pack.ClientMessage = message;
+        ClientSend<Msg.C2G.CMESSAGEReq>((int)Msg.C2G.CMD.CmessageReq, pack);
     }
+
+
 }

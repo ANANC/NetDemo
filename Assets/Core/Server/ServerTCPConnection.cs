@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using UnityEngine;
 
 public class ServerTCPConnection : BaseConnection
 {
@@ -42,14 +41,14 @@ public class ServerTCPConnection : BaseConnection
         ServerClientTCPConnection clientConnection = new ServerClientTCPConnection();
         clientConnection.Connect(socket, m_CheckingCode);
         NetBodyRegisterReceiver(clientConnection);
-        m_Clients.Add(clientConnection);
 
-        Debug.Log("连接上客户端！");
+        NetTestMgr.ShowStrContentEvent(true, "连接客户端");
     }
 
     private void NetBodyRegisterReceiver(ServerClientTCPConnection client)
     {
-        client.AddReceiveDelegate((int)Msg.C2G.CMD.Message, (message) => { RespondMessage(client, message); });
+        client.AddReceiveDelegate((int)Msg.C2G.CMD.AuthReq, (message) => { AuthMessage(client, message); });
+        client.AddReceiveDelegate((int)Msg.C2G.CMD.CmessageReq, (message) => { RespondMessage(client, message); });
     }
 
     public new void Update()
@@ -70,13 +69,25 @@ public class ServerTCPConnection : BaseConnection
 
     //------ callback
 
+    private void AuthMessage(ServerClientTCPConnection client, IMessage message)
+    {
+        NetTestMgr.ShowStrContentEvent(true, "认证客户端");
+
+        Msg.G2C.AuthRsp msg = new Msg.G2C.AuthRsp();
+        m_Clients.Add(client);
+        msg.UserId = m_Clients.Count.ToString();
+        client.m_Id = msg.UserId;
+        client.Send<Msg.G2C.AuthRsp>(((int)Msg.G2C.CMD.AuthRsp), msg);
+    }
+
     private void RespondMessage(ServerClientTCPConnection client, IMessage message)
     {
-        Msg.C2G.MESSAGE msg = message as Msg.C2G.MESSAGE;
-        Debug.Log("服务器收到客户端（"+client.Id()+"）信息：" + msg.Content);
+        Msg.C2G.CMESSAGEReq msg = message as Msg.C2G.CMESSAGEReq;
+        NetTestMgr.ShowStrContentEvent(true, string.Format("收到客户端{0}：{1}", client.m_Id, msg.ClientMessage));
 
-        Msg.G2C.Respond respond = new Msg.G2C.Respond();
-        respond.Content = "服务器回复：" + msg.Content;
-        client.Send<Msg.G2C.Respond>(((int)Msg.G2C.CMD.Respond), respond);
+        NetTestMgr.ShowStrContentEvent(true, string.Format("发送：{0}", msg.ClientMessage));
+        Msg.G2C.SMESSAGERsp respond = new Msg.G2C.SMESSAGERsp();
+        respond.ClientMessage = msg.ClientMessage;
+        client.Send<Msg.G2C.SMESSAGERsp>(((int)Msg.G2C.CMD.SmessageRsp), respond);
     }
 }

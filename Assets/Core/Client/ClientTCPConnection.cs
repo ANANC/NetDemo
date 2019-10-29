@@ -68,8 +68,6 @@ public class ClientTCPConnection : BaseConnection
     private void OnConnect(IAsyncResult asr)
     {
         m_Socket.EndConnect(asr);
-        Debug.Log("【客户端】连接成功！");
+        NetTestMgr.ShowStrContentEvent(false, "客户端连接成功");
     }
-
-
 }

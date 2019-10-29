@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package msg.c2g;
+
+//////////////////////////////////////// 协议号 ////////////////////////////////////////
+
+enum CMD {
+    CMD_INVALID = 0;
+    CMD_AUTH_REQ = 100;
+    CMD_CMESSAGE_REQ = 101;
+}
+
+//////////////////////////////////////// 消息 ////////////////////////////////////////
+
+
+// 认证请求
+message AuthReq {
+}
+
+// 信息请求
+message CMESSAGEReq {
+    string client_message = 1; // 信息
+}

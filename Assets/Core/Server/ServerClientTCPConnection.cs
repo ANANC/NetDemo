@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class ServerClientTCPConnection : BaseConnection
 {
+    public string m_Id;
     ServerNetBody m_NetBody;
     public void Connect(Socket socket, byte checkingCode)
     {
@@ -22,7 +23,8 @@ public class ServerClientTCPConnection : BaseConnection
 
     protected void RegisterParsers()
     {
-        m_NetBody.AddParser((int)CMD.Message, MESSAGE.Parser);
+        m_NetBody.AddParser((int)CMD.AuthReq, AuthReq.Parser);
+        m_NetBody.AddParser((int)CMD.CmessageReq, CMESSAGEReq.Parser);
     }
 
     public void AddReceiveDelegate(int command, MessageReceiveDelegate receiveDelegate)
