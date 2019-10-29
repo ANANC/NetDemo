@@ -20,3 +20,15 @@ Release
 *.vtg
 StreamingAssets
 .vs
+Main/core/
+Main/Assets/StreamingAssets.meta
+Main/Assets/Core/Lua/Data/**/*.meta
+Main/Assets/Core/Lua/Packets/SCPackets/*.meta
+Main/Assets/Core/Lua/Packets/CSPackets/*.meta
+Main/\.vscode/
+Main/c:/
+Main/c/
+Main/\.idea/
+Main/Logs/
+Main/Assets/Core/Lua/.vscode/
+Library\metadata\*
