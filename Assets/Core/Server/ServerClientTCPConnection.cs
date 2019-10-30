@@ -32,8 +32,4 @@ public class ServerClientTCPConnection : BaseConnection
         m_NetBody.AddReceiveDelegate(command, receiveDelegate);
     }
 
-    public int Id()
-    {
-        return m_Socket.AddressFamily.GetHashCode();
-    }
 }

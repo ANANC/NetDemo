@@ -10,6 +10,7 @@ public class ServerTCPConnection : BaseConnection
     private int m_Port;
     private byte m_CheckingCode;
 
+    private List<Socket> m_ReceiveSocketList = new List<Socket>();
     private List<ServerClientTCPConnection> m_Clients = new List<ServerClientTCPConnection>();
     private Thread m_ListenThread;
 
@@ -38,11 +39,7 @@ public class ServerTCPConnection : BaseConnection
     private void AcceptClient(IAsyncResult ar)
     {
         Socket socket = m_Socket.EndAccept(ar);
-        ServerClientTCPConnection clientConnection = new ServerClientTCPConnection();
-        clientConnection.Connect(socket, m_CheckingCode);
-        NetBodyRegisterReceiver(clientConnection);
-
-        NetTestMgr.ShowStrContentEvent(true, "连接客户端");
+        m_ReceiveSocketList.Add(socket);
     }
 
     private void NetBodyRegisterReceiver(ServerClientTCPConnection client)
@@ -54,6 +51,18 @@ public class ServerTCPConnection : BaseConnection
     public new void Update()
     {
         base.Update();
+        for(int index = 0;index< m_ReceiveSocketList.Count; index++)
+        {
+            ServerClientTCPConnection clientConnection = new ServerClientTCPConnection();
+            clientConnection.Connect(m_ReceiveSocketList[index], m_CheckingCode);
+            NetBodyRegisterReceiver(clientConnection);
+            clientConnection.m_Id = m_Clients.Count.ToString();
+            m_Clients.Add(clientConnection);
+
+            NetTestMgr.ShowStrContentEvent(true, "连接客户端");
+        }
+        m_ReceiveSocketList.Clear();
+
         for (int index = 0; index < m_Clients.Count; index++)
         {
             m_Clients[index].Update();
@@ -74,9 +83,7 @@ public class ServerTCPConnection : BaseConnection
         NetTestMgr.ShowStrContentEvent(true, "认证客户端");
 
         Msg.G2C.AuthRsp msg = new Msg.G2C.AuthRsp();
-        m_Clients.Add(client);
-        msg.UserId = m_Clients.Count.ToString();
-        client.m_Id = msg.UserId;
+        msg.UserId = client.m_Id;
         client.Send<Msg.G2C.AuthRsp>(((int)Msg.G2C.CMD.AuthRsp), msg);
     }
 

@@ -17,13 +17,14 @@ public class SimpleUI : MonoBehaviour
     public Text m_ClientText;
     public Text m_ServerText;
 
-    private void Awake()
-    {
-        NetTestMgr.ShowStrContentEvent += Show;
-    }
-
     void Start()
     {
+        NetTestMgr.ShowStrContentEvent += Show;
+
+        m_ServerText.text = string.Empty;
+        m_ClientText.text = string.Empty;
+
+
         m_ConnectButton.onClick.AddListener(ConnentButtonOnClick);
         m_AuthButton.onClick.AddListener(ClientAuthButtonOnClick);
         m_ClientSendButton.onClick.AddListener(ClientSendButtonOnClick);
@@ -59,14 +60,15 @@ public class SimpleUI : MonoBehaviour
 
     public void Show(bool isServer, string Content)
     {
-        Debug.Log(Content);
         if (isServer)
         {
             m_ServerText.text += string.Format("net Serve : ( {0} )\n   {1}\n\n", DateTime.Now, Content);
         }
         else
         {
-            m_ClientText.text += string.Format("net Client : ( {0} )\n   {1}\n\n", DateTime.Now, Content); ;
+            m_ClientText.text += string.Format("net Client : ( {0} )\n   {1}\n\n", DateTime.Now, Content);
         }
+
+        Debug.Log(Content);
     }
 }

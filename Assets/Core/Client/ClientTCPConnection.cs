@@ -59,7 +59,8 @@ public class ClientTCPConnection : BaseConnection
         netPackage.checkingCode = m_CheckingCode;
 
         SetNetPackage(netPackage);
-        SetSocket(socket);
+
+        m_Socket = socket;
 
         socket.BeginConnect(host, port, OnConnect, null);
 
@@ -68,6 +69,8 @@ public class ClientTCPConnection : BaseConnection
     private void OnConnect(IAsyncResult asr)
     {
         m_Socket.EndConnect(asr);
+        SetSocket(m_Socket);
+
         NetTestMgr.ShowStrContentEvent(false, "客户端连接成功");
     }
 }
