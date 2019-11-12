@@ -6,10 +6,10 @@ using UnityEngine;
 public class ServerClientTCPConnection : BaseConnection
 {
     public string m_Id;
-    ServerNetBody m_NetBody;
+    GoogleProtoNetBody m_NetBody;
     public void Connect(Socket socket, byte checkingCode)
     {
-        m_NetBody = new ServerNetBody();
+        m_NetBody = new GoogleProtoNetBody();
         RegisterParsers();
 
         NetPackage netPackage = new NetPackage();
