@@ -10,7 +10,9 @@ public class ServerNetter : SimpleNetter
 {
     public const int CLIENT_MAX = 100;  //连接客户端的上限
 
-    private List<Socket> m_ReceiveSocketList = new List<Socket>();
+    public Action<ClientNetter> m_ClientRegisterCallback;
+
+    private List<ClientNetter> m_ReceiveSocketList = new List<ClientNetter>();
     private Thread m_ListenThread;
 
     public ServerNetter(int port) :base()
@@ -28,7 +30,23 @@ public class ServerNetter : SimpleNetter
 
     public new void Update()
     {
-        base.Update();
+        //base.Update();
+        //for (int index = 0; index < m_ReceiveSocketList.Count; index++)
+        //{
+        //    ServerClientTCPConnection clientConnection = new ServerClientTCPConnection();
+        //    clientConnection.Connect(m_ReceiveSocketList[index], m_CheckingCode);
+        //    NetBodyRegisterReceiver(clientConnection);
+        //    clientConnection.m_Id = m_Clients.Count.ToString();
+        //    m_Clients.Add(clientConnection);
+
+        //    NetTestMgr.ShowStrContentEvent(true, "连接客户端");
+        //}
+        //m_ReceiveSocketList.Clear();
+
+        //for (int index = 0; index < m_Clients.Count; index++)
+        //{
+        //    m_Clients[index].Update();
+        //}
     }
 
     public new void Close()
@@ -50,6 +68,17 @@ public class ServerNetter : SimpleNetter
     private void AcceptClient(IAsyncResult ar)
     {
         Socket socket = m_Socket.EndAccept(ar);
-        m_ReceiveSocketList.Add(socket);
+        ClientNetter clientNetter = new ClientNetter(socket);
+        clientNetter.Id = m_ReceiveSocketList.Count;
+        if (m_ClientRegisterCallback!=null)
+        {
+            m_ClientRegisterCallback(clientNetter);
+        }
+
+        m_ReceiveSocketList.Add(clientNetter);
+
+        clientNetter.BeginReceive();
     }
+
+
 }
