@@ -6,8 +6,8 @@ using UnityEngine;
 
 public class ClientNetter : SimpleNetter
 {
-    private int m_Id;
-    public int Id
+    private uint m_Id;
+    public uint Id
     {
         get { return m_Id; }
         set { m_Id = value; }

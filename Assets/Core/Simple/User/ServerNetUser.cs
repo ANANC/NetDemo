@@ -10,52 +10,58 @@ public class ServerNetUser
     public ServerNetUser(int port)
     {
         m_Netter = new ServerNetter(port);
-        m_Netter.m_ClientRegisterCallback = InitClientRegister;
     }
 
-    private void InitClientRegister(ClientNetter client)
+    private void InitClientRegister()
     {
-        client.AddParser((int)Msg.C2G.CMD.AuthReq, Msg.C2G.AuthReq.Parser);
-        client.AddParser((int)Msg.C2G.CMD.CmessageReq, Msg.C2G.CMESSAGEReq.Parser);
+        m_Netter.AddParser((int)Msg.C2G.CMD.AuthReq, Msg.C2G.AuthReq.Parser);
+        m_Netter.AddParser((int)Msg.C2G.CMD.CmessageReq, Msg.C2G.CMESSAGEReq.Parser);
 
-        client.AddReceiveDelegate((int)Msg.C2G.CMD.AuthReq, (message) => { AuthMessage(client, message); });
-        client.AddReceiveDelegate((int)Msg.C2G.CMD.CmessageReq, (message) => { RespondMessage(client, message); });
+        m_Netter.AddReceiveDelegate((int)Msg.C2G.CMD.AuthReq, AuthMessage);
+        m_Netter.AddReceiveDelegate((int)Msg.C2G.CMD.CmessageReq, RespondMessage);
+    }
+
+    public void Update()
+    {
+        m_Netter.Update();
     }
 
     // -- 业务处理 --
 
     // -- Client to Server --
 
-    private void AuthMessage(ClientNetter client , IMessage message)
+    private void AuthMessage(uint clientId , IMessage message)
     {
         Msg.C2G.AuthReq authReq = message as Msg.C2G.AuthReq;
 
         NetTestMgr.ShowStrContentEvent(true, "认证客户端");
 
-        SendAuthRsp(client);
+        SendAuthRsp(clientId);
     }
 
-    private void RespondMessage(ClientNetter client, IMessage message)
+    private void RespondMessage(uint clientId, IMessage message)
     {
         Msg.C2G.CMESSAGEReq msg = message as Msg.C2G.CMESSAGEReq;
-        NetTestMgr.ShowStrContentEvent(true, string.Format("收到客户端{0}：{1}", client.Id, msg.ClientMessage));
+        NetTestMgr.ShowStrContentEvent(true, string.Format("收到客户端{0}：{1}", clientId, msg.ClientMessage));
 
-        SendMessageRsp(client,msg.ClientMessage);
+        SendMessageRsp(clientId, msg.ClientMessage);
     }
 
     // -- Server to Client --
-    public void SendAuthRsp(ClientNetter client)
+    public void SendAuthRsp(uint clientId)
     {
         Msg.G2C.AuthRsp msg = new Msg.G2C.AuthRsp();
-        msg.UserId = client.Id.ToString();
+        msg.UserId = clientId;
+        ClientNetter client = m_Netter.GetClient(clientId);
         client.Send<Msg.G2C.AuthRsp>(((int)Msg.G2C.CMD.AuthRsp), msg);
     }
 
-    public void SendMessageRsp(ClientNetter client, string message)
+    public void SendMessageRsp(uint clientId, string message)
     {
         NetTestMgr.ShowStrContentEvent(true, string.Format("发送：{0}", message));
         Msg.G2C.SMESSAGERsp respond = new Msg.G2C.SMESSAGERsp();
         respond.ClientMessage = message;
+        ClientNetter client = m_Netter.GetClient(clientId);
         client.Send<Msg.G2C.SMESSAGERsp>(((int)Msg.G2C.CMD.SmessageRsp), respond);
     }
 }

@@ -56,7 +56,7 @@ public class ServerTCPConnection : BaseConnection
             ServerClientTCPConnection clientConnection = new ServerClientTCPConnection();
             clientConnection.Connect(m_ReceiveSocketList[index], m_CheckingCode);
             NetBodyRegisterReceiver(clientConnection);
-            clientConnection.m_Id = m_Clients.Count.ToString();
+            clientConnection.m_Id = (uint)m_Clients.Count;
             m_Clients.Add(clientConnection);
 
             NetTestMgr.ShowStrContentEvent(true, "连接客户端");

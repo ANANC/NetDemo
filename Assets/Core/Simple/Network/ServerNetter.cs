@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Google.Protobuf;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
@@ -8,11 +9,20 @@ using UnityEngine;
 
 public class ServerNetter : SimpleNetter
 {
+    public delegate void ServerMessageReceiveDelegate(uint clientId ,IMessage message);
+    protected class NetData: ReceiveObject
+    {
+        public uint clientId;
+    }
+
     public const int CLIENT_MAX = 100;  //连接客户端的上限
+    private static int s_ClientAutoId = 0; //客户端自动分配业务id
 
-    public Action<ClientNetter> m_ClientRegisterCallback;
+    private Dictionary<uint, ClientNetter> m_ClientDict = new Dictionary<uint, ClientNetter>();
+    private List<ClientNetter> m_ClientList = new List<ClientNetter>();
 
-    private List<ClientNetter> m_ReceiveSocketList = new List<ClientNetter>();
+    private new Dictionary<int, ServerMessageReceiveDelegate> m_ReceiveDelegateDic = new Dictionary<int, ServerMessageReceiveDelegate>();   //协议处理回调
+
     private Thread m_ListenThread;
 
     public ServerNetter(int port) :base()
@@ -28,25 +38,36 @@ public class ServerNetter : SimpleNetter
         m_ListenThread.IsBackground = true; //后台运行
     }
 
+    public void AddReceiveDelegate(int command, ServerMessageReceiveDelegate receiveDelegate)
+    {
+        m_ReceiveDelegateDic.Add(command, receiveDelegate);
+    }
+
     public new void Update()
     {
-        //base.Update();
-        //for (int index = 0; index < m_ReceiveSocketList.Count; index++)
-        //{
-        //    ServerClientTCPConnection clientConnection = new ServerClientTCPConnection();
-        //    clientConnection.Connect(m_ReceiveSocketList[index], m_CheckingCode);
-        //    NetBodyRegisterReceiver(clientConnection);
-        //    clientConnection.m_Id = m_Clients.Count.ToString();
-        //    m_Clients.Add(clientConnection);
+        while (true)
+        {
+            ReceiveObject receiveObject = null;
 
-        //    NetTestMgr.ShowStrContentEvent(true, "连接客户端");
-        //}
-        //m_ReceiveSocketList.Clear();
+            //从处理队列中得到需要处理的协议对象
+            if (m_ReceiveQueue.TryDequeue(out receiveObject))
+            {
+                ServerMessageReceiveDelegate messageReceiveDelegate = null;
+                if (m_ReceiveDelegateDic.TryGetValue(receiveObject.command, out messageReceiveDelegate))
+                {
+                    NetData netData = receiveObject as NetData;
+                    //业务处理
+                    messageReceiveDelegate(netData.clientId, netData.message);
+                }
+                continue;
+            }
+            break;
+        }
 
-        //for (int index = 0; index < m_Clients.Count; index++)
-        //{
-        //    m_Clients[index].Update();
-        //}
+        for(int index = 0;index< m_ClientList.Count;index++)
+        {
+            m_ClientList[index].Update();
+        }
     }
 
     public new void Close()
@@ -69,16 +90,43 @@ public class ServerNetter : SimpleNetter
     {
         Socket socket = m_Socket.EndAccept(ar);
         ClientNetter clientNetter = new ClientNetter(socket);
-        clientNetter.Id = m_ReceiveSocketList.Count;
-        if (m_ClientRegisterCallback!=null)
+        clientNetter.Id = (uint)(s_ClientAutoId++);
+
+        Dictionary<int, MessageParser>.Enumerator parserEnumator = m_ReceiveParserDic.GetEnumerator();
+        while(parserEnumator.MoveNext())
         {
-            m_ClientRegisterCallback(clientNetter);
+            clientNetter.AddParser(parserEnumator.Current.Key, parserEnumator.Current.Value);
         }
 
-        m_ReceiveSocketList.Add(clientNetter);
+        Dictionary<int, ServerMessageReceiveDelegate>.Enumerator delegateEnumator = m_ReceiveDelegateDic.GetEnumerator();
+        while (parserEnumator.MoveNext())
+        {
+            MessageReceiveDelegate callback = (message) => { ClientEndReceive(clientNetter.Id, parserEnumator.Current.Key, message); };
+            clientNetter.AddReceiveDelegate(parserEnumator.Current.Key, callback);
+        }
+
+        m_ClientDict.Add(clientNetter.Id, clientNetter);
+        m_ClientList.Add(clientNetter);
 
         clientNetter.BeginReceive();
     }
 
+    private void ClientEndReceive(uint id, int command, IMessage message)
+    {
+        NetData receiveObject = new NetData();
+        receiveObject.clientId = id;
+        receiveObject.command = command;
+        receiveObject.message = message;
+        m_ReceiveQueue.Enqueue(receiveObject);
+    }
 
+    public ClientNetter GetClient(uint id)
+    {
+        ClientNetter client;
+        if (m_ClientDict.TryGetValue(id,out client))
+        {
+            return client;
+        }
+        return null;
+    }
 }

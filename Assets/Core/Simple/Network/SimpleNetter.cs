@@ -12,7 +12,7 @@ public class SimpleNetter
     //*  数据  *//    
 
     // 协议结构
-    private class ReceiveObject
+    protected class ReceiveObject
     {
         public int command;
         public IMessage message;
@@ -45,9 +45,9 @@ public class SimpleNetter
 
     // -- 协议 --
 
-    private ConcurrentQueue<ReceiveObject> m_ReceiveQueue = new ConcurrentQueue<ReceiveObject>();                           //处理队列
-    private Dictionary<int, MessageParser> m_ReceiveParserDic = new Dictionary<int, MessageParser>();                       //协议解析器
-    private Dictionary<int, MessageReceiveDelegate> m_ReceiveDelegateDic = new Dictionary<int, MessageReceiveDelegate>();   //协议处理回调
+    protected ConcurrentQueue<ReceiveObject> m_ReceiveQueue = new ConcurrentQueue<ReceiveObject>();                           //处理队列
+    protected Dictionary<int, MessageParser> m_ReceiveParserDic = new Dictionary<int, MessageParser>();                       //协议解析器
+    protected Dictionary<int, MessageReceiveDelegate> m_ReceiveDelegateDic = new Dictionary<int, MessageReceiveDelegate>();   //协议处理回调
 
 
     // -- 状态回调 --
@@ -387,7 +387,7 @@ public class SimpleNetter
     }
 
     // 解析包体
-    public string ReadBody(byte[] bytes, int offset, int length)
+    private string ReadBody(byte[] bytes, int offset, int length)
     {
         CodedInputStream input = new CodedInputStream(bytes, offset, length);
         int command = input.ReadInt32();
@@ -411,6 +411,7 @@ public class SimpleNetter
         input.Dispose();
         return string.Empty;
     }
+
 
     // -- 输出 --
     public void SendNotification(ConnectNotificationType connectNotificationType, string message)

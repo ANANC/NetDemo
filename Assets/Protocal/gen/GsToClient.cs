@@ -25,7 +25,7 @@ namespace Msg.G2C {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Chlzb3VyY2UvZ3NfdG9fY2xpZW50LnByb3RvEgdtc2cuZzJjIhoKB0F1dGhS",
-            "c3ASDwoHdXNlcl9pZBgBIAEoCSIlCgtTTUVTU0FHRVJzcBIWCg5jbGllbnRf",
+            "c3ASDwoHdXNlcl9pZBgBIAEoDSIlCgtTTUVTU0FHRVJzcBIWCg5jbGllbnRf",
             "bWVzc2FnZRgBIAEoCSpACgNDTUQSDwoLQ01EX0lOVkFMSUQQABIRCgxDTURf",
             "QVVUSF9SU1AQyAESFQoQQ01EX1NNRVNTQUdFX1JTUBDJAWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
@@ -87,15 +87,15 @@ namespace Msg.G2C {
 
     /// <summary>Field number for the "user_id" field.</summary>
     public const int UserIdFieldNumber = 1;
-    private string userId_ = "";
+    private uint userId_;
     /// <summary>
     /// 用户ID
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public string UserId {
+    public uint UserId {
       get { return userId_; }
       set {
-        userId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        userId_ = value;
       }
     }
 
@@ -119,7 +119,7 @@ namespace Msg.G2C {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override int GetHashCode() {
       int hash = 1;
-      if (UserId.Length != 0) hash ^= UserId.GetHashCode();
+      if (UserId != 0) hash ^= UserId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -133,9 +133,9 @@ namespace Msg.G2C {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void WriteTo(pb::CodedOutputStream output) {
-      if (UserId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(UserId);
+      if (UserId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(UserId);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -145,8 +145,8 @@ namespace Msg.G2C {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public int CalculateSize() {
       int size = 0;
-      if (UserId.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(UserId);
+      if (UserId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(UserId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -159,7 +159,7 @@ namespace Msg.G2C {
       if (other == null) {
         return;
       }
-      if (other.UserId.Length != 0) {
+      if (other.UserId != 0) {
         UserId = other.UserId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -173,8 +173,8 @@ namespace Msg.G2C {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
-            UserId = input.ReadString();
+          case 8: {
+            UserId = input.ReadUInt32();
             break;
           }
         }

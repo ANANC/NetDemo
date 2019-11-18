@@ -14,7 +14,7 @@ enum CMD {
 
 // 用户登录认证响应
 message AuthRsp {
-    string user_id = 1; // 用户ID
+    uint32 user_id = 1; // 用户ID
 }
 
 // 信息响应

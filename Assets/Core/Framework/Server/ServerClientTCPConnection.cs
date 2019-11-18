@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class ServerClientTCPConnection : BaseConnection
 {
-    public string m_Id;
+    public uint m_Id;
     GoogleProtoNetBody m_NetBody;
     public void Connect(Socket socket, byte checkingCode)
     {

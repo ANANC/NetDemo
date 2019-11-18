@@ -37,6 +37,11 @@ public class ClientNetUser
         m_Netter.Update();
     }
 
+    public void Close()
+    {
+        m_Netter.Close();
+    }
+
     // -- 业务处理 --
 
     // -- Client to Server --
