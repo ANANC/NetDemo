@@ -9,8 +9,8 @@ using UnityEngine;
 
 public class ServerNetter : SimpleNetter
 {
-    public delegate void ServerMessageReceiveDelegate(uint clientId ,IMessage message);
-    protected class NetData: ReceiveObject
+    public delegate void ServerMessageReceiveDelegate(uint clientId, IMessage message);
+    protected class NetData : ReceiveObject
     {
         public uint clientId;
     }
@@ -22,10 +22,11 @@ public class ServerNetter : SimpleNetter
     private List<ClientNetter> m_ClientList = new List<ClientNetter>();
 
     private new Dictionary<int, ServerMessageReceiveDelegate> m_ReceiveDelegateDic = new Dictionary<int, ServerMessageReceiveDelegate>();   //协议处理回调
+    private Dictionary<Type, int> m_MessageToCommand = new Dictionary<Type, int>(); //协议类型对应的id
 
     private Thread m_ListenThread;
 
-    public ServerNetter(int port) :base()
+    public ServerNetter(int port) : base()
     {
         m_OnAcceptCallback = AcceptClient;
 
@@ -42,6 +43,12 @@ public class ServerNetter : SimpleNetter
     {
         m_ReceiveDelegateDic.Add(command, receiveDelegate);
     }
+    public new void AddParser(int command, MessageParser parser)
+    {
+        m_ReceiveParserDic.Add(command, parser);
+        m_MessageToCommand.Add(parser.CreateTemplate().GetType(), command);
+    }
+
 
     public new void Update()
     {
@@ -99,10 +106,10 @@ public class ServerNetter : SimpleNetter
         }
 
         Dictionary<int, ServerMessageReceiveDelegate>.Enumerator delegateEnumator = m_ReceiveDelegateDic.GetEnumerator();
-        while (parserEnumator.MoveNext())
+        while (delegateEnumator.MoveNext())
         {
-            MessageReceiveDelegate callback = (message) => { ClientEndReceive(clientNetter.Id, parserEnumator.Current.Key, message); };
-            clientNetter.AddReceiveDelegate(parserEnumator.Current.Key, callback);
+            MessageReceiveDelegate callback = (message) => { ClientEndReceive(clientNetter.Id, message); };
+            clientNetter.AddReceiveDelegate(delegateEnumator.Current.Key, callback);
         }
 
         m_ClientDict.Add(clientNetter.Id, clientNetter);
@@ -111,11 +118,11 @@ public class ServerNetter : SimpleNetter
         clientNetter.BeginReceive();
     }
 
-    private void ClientEndReceive(uint id, int command, IMessage message)
+    private void ClientEndReceive(uint id,  IMessage message)
     {
         NetData receiveObject = new NetData();
         receiveObject.clientId = id;
-        receiveObject.command = command;
+        receiveObject.command = m_MessageToCommand[message.GetType()]; ;
         receiveObject.message = message;
         m_ReceiveQueue.Enqueue(receiveObject);
     }

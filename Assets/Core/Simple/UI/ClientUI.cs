@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +15,7 @@ public class ClientUI : MonoBehaviour
     private void Awake()
     {
         m_Net = new ClientNetUser();
+        m_Net.m_ContentShow = Show;
     }
 
     void Start()
@@ -33,7 +32,7 @@ public class ClientUI : MonoBehaviour
         m_Net.Update();
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
         m_Net.Close();
     }
@@ -43,13 +42,14 @@ public class ClientUI : MonoBehaviour
         m_Net.Connect(Define.HOST,Define.PORT);
         m_ConnectButton.gameObject.SetActive(false);
         m_AuthButton.gameObject.SetActive(true);
+
+        Show("客户端请求连接");
     }
 
     public void ClientAuthButtonOnClick()
     {
         m_AuthButton.gameObject.SetActive(false);
-
-        Show("客户端请求认证");
+        m_SendButton.gameObject.SetActive(true);
 
         m_Net.SendAuthReq();
     }

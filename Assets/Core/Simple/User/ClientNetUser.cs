@@ -1,12 +1,11 @@
 ﻿using Google.Protobuf;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using System;
 
 public class ClientNetUser 
 {
     private ClientNetter m_Netter;
-    
+    public Action<string> m_ContentShow;
+
     public ClientNetUser()
     {
         m_Netter = new ClientNetter();
@@ -51,6 +50,8 @@ public class ClientNetUser
     /// </summary>
     public void SendAuthReq()
     {
+        Show("客户端请求认证");
+
         Msg.C2G.AuthReq pack = new Msg.C2G.AuthReq();
         m_Netter.Send<Msg.C2G.AuthReq>((int)Msg.C2G.CMD.AuthReq, pack);
     }
@@ -60,6 +61,8 @@ public class ClientNetUser
     /// </summary>
     public void SendMessage(string message)
     {
+        Show("发送：" + message);
+
         Msg.C2G.CMESSAGEReq pack = new Msg.C2G.CMESSAGEReq();
         pack.ClientMessage = message;
         m_Netter.Send<Msg.C2G.CMESSAGEReq>((int)Msg.C2G.CMD.CmessageReq, pack);
@@ -75,7 +78,7 @@ public class ClientNetUser
     {
         Msg.G2C.AuthRsp msg = message as Msg.G2C.AuthRsp;
         m_Netter.Id = msg.UserId;
-        NetTestMgr.ShowStrContentEvent(false, string.Format("接收：客户端{0}认证通过", msg.UserId));
+        Show(string.Format("接收：客户端{0}认证通过", msg.UserId));
     }
 
     /// <summary>
@@ -84,6 +87,14 @@ public class ClientNetUser
     private void ReceiverMessage(IMessage message)
     {
         Msg.G2C.SMESSAGERsp msg = message as Msg.G2C.SMESSAGERsp;
-        NetTestMgr.ShowStrContentEvent(false, string.Format("接收：{0}", msg.ClientMessage));
+        Show(string.Format("接收：{0}", msg.ClientMessage));
+    }
+
+    private void Show(string content)
+    {
+        if(m_ContentShow !=null)
+        {
+            m_ContentShow(content);
+        }
     }
 }
