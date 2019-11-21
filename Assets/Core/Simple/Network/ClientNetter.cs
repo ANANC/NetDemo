@@ -33,6 +33,7 @@ public class ClientNetter : SimpleNetter
     private void ConnectServer(IAsyncResult asr)
     {
         m_Socket.EndConnect(asr);
+        BeginReceive();
     }
 
 }

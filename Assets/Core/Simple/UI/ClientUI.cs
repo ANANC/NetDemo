@@ -8,6 +8,7 @@ public class ClientUI : MonoBehaviour
     public Button m_AuthButton;
     public Button m_SendButton;
     public Text m_Text;
+    public RectTransform m_TextMask;
     public InputField m_Inputfield;
 
     private ClientNetUser m_Net;
@@ -62,6 +63,17 @@ public class ClientUI : MonoBehaviour
 
     public void Show(string content)
     {
-        m_Text.text += string.Format("net Client : ( {0} )\n   {1}\n\n", DateTime.Now, content);
+        m_Text.text += string.Format("{0}\n\n", content);
+        UpdateTextPosition();
+    }
+
+    private void UpdateTextPosition()
+    {
+        Vector3 pos = new Vector3(0, (m_Text.rectTransform.sizeDelta.y - m_TextMask.sizeDelta.y) / 2);
+        if (pos.y < 0)
+        {
+            pos.y = 0;
+        }
+        m_Text.transform.localPosition = pos;
     }
 }
