@@ -51,7 +51,7 @@ public class ServerNetUser
     private void RespondMessage(uint clientId, IMessage message)
     {
         Msg.C2G.CMESSAGEReq msg = message as Msg.C2G.CMESSAGEReq;
-        Show(string.Format("收到客户端{0}：{1}", clientId, msg.ClientMessage));
+        Show(string.Format("From {0}：{1}", clientId, msg.ClientMessage));
 
         SendMessageRsp(clientId, msg.ClientMessage);
     }

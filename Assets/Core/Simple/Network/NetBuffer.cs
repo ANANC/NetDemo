@@ -28,10 +28,6 @@ public class NetBuffer
         return m_ByteBufferLength - m_ByteBufferIndex;
     }
 
-    public int ReadInt()
-    {
-        return NetUtils.ReadIntFromBytes(m_ByteBuffer, ref m_ByteBufferIndex);
-    }
 
     public byte[] bytes
     {

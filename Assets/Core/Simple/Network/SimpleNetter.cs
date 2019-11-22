@@ -10,6 +10,13 @@ using UnityEngine;
 public class SimpleNetter
 {
     //*  数据  *//    
+    public delegate void MessageReceiveDelegate(IMessage message);
+    public enum ConnectNotificationType
+    {
+        Exception,
+        Disconnect,
+
+    }
 
     // 协议结构
     protected class ReceiveObject
@@ -202,10 +209,10 @@ public class SimpleNetter
         // 包头填充
 
         // 2.快速校验码
-        NetUtils.WriteByteToBytes(m_CheckingCode, m_HeadBuffer, ref headSize);
+        WriteByteToBytes(m_CheckingCode, m_HeadBuffer, ref headSize);
 
         // 1.本次包的编号
-        NetUtils.WriteIntToBytes(m_PackageIndex++, m_HeadBuffer, ref headSize);
+        WriteIntToBytes(m_PackageIndex++, m_HeadBuffer, ref headSize);
 
         WriteMessage(m_HeadBuffer, m_HandleBuffer, m_HandleBuffer.Length);
         return true;
@@ -323,7 +330,9 @@ public class SimpleNetter
 
         while (m_NetBuffer.RemainingBytes() > MIN_READ)
         {
-            int messageLen = m_NetBuffer.ReadInt();
+            int netBufferIndex = m_NetBuffer.index;
+            int messageLen = ReadIntFromBytes(m_NetBuffer.bytes, ref netBufferIndex);
+            m_NetBuffer.index = netBufferIndex;
             if (messageLen > MIN_READ && messageLen <= MAX_READ)
             {
                 if (m_NetBuffer.RemainingBytes() >= messageLen)
@@ -364,14 +373,14 @@ public class SimpleNetter
         // 包头解析
 
         // 1.快速校验码
-        byte checkingCode = NetUtils.ReadByteFromBytes(bytes, ref offset);
+        byte checkingCode = ReadByteFromBytes(bytes, ref offset);
         if (!checkingCode.Equals(m_CheckingCode))
         {
             return "ReadPackage Failed , CheckingCode Is Incorrect.";
         }
 
         // 2.本次包的编号
-        int packageID = NetUtils.ReadIntFromBytes(bytes, ref offset);
+        int packageID = ReadIntFromBytes(bytes, ref offset);
 
         m_HandleBuffer = new byte[length - (offset - dwStartOffset)];
         Array.Copy(bytes, offset, m_HandleBuffer, 0, m_HandleBuffer.Length);
@@ -412,6 +421,40 @@ public class SimpleNetter
         return string.Empty;
     }
 
+    // -- Util --
+
+    public static void WriteByteToBytes(byte value, byte[] bytes, ref int offset)
+    {
+        bytes[offset] = value;
+        offset++;
+    }
+
+    public static byte ReadByteFromBytes(byte[] bytes, ref int offset)
+    {
+        byte value = bytes[offset];
+        offset++;
+        return value;
+    }
+
+    public static void WriteIntToBytes(int value, byte[] bytes, ref int offset)
+    {
+        bytes[offset + 3] = (byte)((value >> 24));
+        bytes[offset + 2] = (byte)((value >> 16));
+        bytes[offset + 1] = (byte)((value >> 8));
+        bytes[offset + 0] = (byte)((value));
+        offset += 4;
+    }
+
+    public static int ReadIntFromBytes(byte[] bytes, ref int offset)
+    {
+        int value;
+        value = (int)((bytes[offset + 0])
+                   | ((bytes[offset + 1]) << 8)
+                   | ((bytes[offset + 2]) << 16)
+                   | ((bytes[offset + 3]) << 24));
+        offset += 4;
+        return value;
+    }
 
     // -- 输出 --
     public void SendNotification(ConnectNotificationType connectNotificationType, string message)

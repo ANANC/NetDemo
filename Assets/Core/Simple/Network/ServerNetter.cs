@@ -1,11 +1,9 @@
 ﻿using Google.Protobuf;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using UnityEngine;
 
 public class ServerNetter : SimpleNetter
 {
@@ -25,6 +23,7 @@ public class ServerNetter : SimpleNetter
     private Dictionary<Type, int> m_MessageToCommand = new Dictionary<Type, int>(); //协议类型对应的id
 
     private Thread m_ListenThread;
+
 
     public ServerNetter(int port) : base()
     {
@@ -136,4 +135,5 @@ public class ServerNetter : SimpleNetter
         }
         return null;
     }
+
 }
