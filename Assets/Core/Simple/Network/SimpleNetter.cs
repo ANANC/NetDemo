@@ -35,7 +35,11 @@ public class SimpleNetter
 
     // -- 连接 --
     protected Socket m_Socket;
-    private NetBuffer m_NetBuffer = new NetBuffer(MAX_READ);           //网络缓存池
+
+    // -- 缓存池 --
+    private byte[] m_ByteBuffer = new byte[MAX_READ];
+    private int m_ByteFirstIndex = 0;
+    private int m_ByteEndIndex = 0;
 
     // -- 协议内容 -- 
     private byte[] m_SendBuffer = new byte[MAX_READ];           //缓冲区
@@ -103,7 +107,7 @@ public class SimpleNetter
 
     public void BeginReceive()
     {
-        m_Socket.BeginReceive(m_NetBuffer.bytes, m_NetBuffer.length, m_NetBuffer.Capacity(), SocketFlags.None, new AsyncCallback(OnRead), null);
+        m_Socket.BeginReceive(m_ByteBuffer, 0, m_SendBuffer.Length, SocketFlags.None, new AsyncCallback(OnRead), null);
     }
 
     // -- 对外接口 --
@@ -303,14 +307,13 @@ public class SimpleNetter
                 bytesRead = m_Socket.EndReceive(asr);
                 if (bytesRead < 4)
                 {
-                    //包尺寸有问题，断线处理
+                    //包尺寸有问题
                     SendNotification(ConnectNotificationType.Exception, "package size error");
                     return;
                 }
 
-                ReceiveMessage(m_NetBuffer.bytes, bytesRead); //分析数据包内容，抛给逻辑层
-                m_Socket.BeginReceive(m_NetBuffer.bytes, m_NetBuffer.length,
-                    m_NetBuffer.Capacity() - m_NetBuffer.length, SocketFlags.None, new AsyncCallback(OnRead), null);
+                ReceiveMessage(bytesRead); //分析数据包内容，抛给逻辑层
+                m_Socket.BeginReceive(m_ByteBuffer, m_ByteEndIndex, m_ByteBuffer.Length - m_ByteEndIndex, SocketFlags.None, new AsyncCallback(OnRead), null);
             }
             catch (Exception ex)
             {
@@ -324,36 +327,36 @@ public class SimpleNetter
     }
 
     // 接收字节，截取包
-    private void ReceiveMessage(byte[] bytes, int length)
+    private void ReceiveMessage(int length)
     {
-        m_NetBuffer.length += length;
+        m_ByteEndIndex += length;
 
-        while (m_NetBuffer.RemainingBytes() > MIN_READ)
+        int mainingBytesLength = m_ByteEndIndex - m_ByteFirstIndex;
+
+        while (mainingBytesLength > MIN_READ)
         {
-            int netBufferIndex = m_NetBuffer.index;
-            int messageLen = ReadIntFromBytes(m_NetBuffer.bytes, ref netBufferIndex);
-            m_NetBuffer.index = netBufferIndex;
+            int messageLen = ReadIntFromBytes(m_ByteBuffer, m_ByteFirstIndex);
+
             if (messageLen > MIN_READ && messageLen <= MAX_READ)
             {
-                if (m_NetBuffer.RemainingBytes() >= messageLen)
+                if (mainingBytesLength < messageLen)
                 {
-                    //解包
-                    string msg = ReadPackage(m_NetBuffer.bytes, m_NetBuffer.index, messageLen);
-
-                    //缓存区头指针指向该包体长度的下一位，等待重新写入数据
-                    m_NetBuffer.index += messageLen;
-                    if (!string.IsNullOrEmpty(msg))
-                    {
-                        SendNotification(ConnectNotificationType.Exception, "ReceiveMessage Error : " + msg);
-                        return;
-                    }
-                }
-                else
-                {
-                    //重置缓存区头指针，等待剩余数据
-                    m_NetBuffer.index -= MIN_READ;
-                    m_NetBuffer.MoveBytesToHead();
+                    //粘包等待下一个包数据
                     return;
+                }
+
+                // 读取了包长度
+                m_ByteFirstIndex += 4;
+
+                //解包
+                string msg = ReadPackage(m_ByteBuffer, m_ByteFirstIndex, messageLen);
+
+                //缓存区头指针指向该包体长度的下一位，等待重新写入数据
+                m_ByteFirstIndex += messageLen;
+
+                if (!string.IsNullOrEmpty(msg))
+                {
+                    SendNotification(ConnectNotificationType.Exception, "ReceiveMessage Error : " + msg);
                 }
             }
             else
@@ -361,8 +364,20 @@ public class SimpleNetter
                 SendNotification(ConnectNotificationType.Exception, "Package Head Lenght Field Error : " + messageLen.ToString());
                 Close();
             }
+
+            mainingBytesLength = m_ByteEndIndex - m_ByteFirstIndex;
         }
-        m_NetBuffer.MoveBytesToHead();
+
+        if (m_ByteFirstIndex != 0)
+        {
+            if (mainingBytesLength > 0)
+            {
+                Array.Copy(m_ByteBuffer, m_ByteFirstIndex, m_ByteBuffer, 0, mainingBytesLength);
+            }
+
+            m_ByteFirstIndex = 0;
+            m_ByteEndIndex = mainingBytesLength;
+        }
     }
 
     // 解包，包头解析
@@ -447,12 +462,18 @@ public class SimpleNetter
 
     public static int ReadIntFromBytes(byte[] bytes, ref int offset)
     {
+        int value = ReadIntFromBytes(bytes, offset);
+        offset += 4;
+        return value;
+    }
+
+    public static int ReadIntFromBytes(byte[] bytes, int offset)
+    {
         int value;
         value = (int)((bytes[offset + 0])
                    | ((bytes[offset + 1]) << 8)
                    | ((bytes[offset + 2]) << 16)
                    | ((bytes[offset + 3]) << 24));
-        offset += 4;
         return value;
     }
 
