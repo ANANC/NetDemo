@@ -22,8 +22,6 @@ public class ServerNetter : SimpleNetter
     private new Dictionary<int, ServerMessageReceiveDelegate> m_ReceiveDelegateDic = new Dictionary<int, ServerMessageReceiveDelegate>();   //协议处理回调
     private Dictionary<Type, int> m_MessageToCommand = new Dictionary<Type, int>(); //协议类型对应的id
 
-    private Thread m_ListenThread;
-
 
     public ServerNetter(int port) : base()
     {
@@ -33,9 +31,6 @@ public class ServerNetter : SimpleNetter
         m_Socket.Bind(new IPEndPoint(IPAddress.Any, port));
         m_Socket.Listen(CLIENT_MAX);
 
-        m_ListenThread = new Thread(ReceiveClient);
-        m_ListenThread.Start(); //开启线程
-        m_ListenThread.IsBackground = true; //后台运行
     }
 
     public void AddReceiveDelegate(int command, ServerMessageReceiveDelegate receiveDelegate)
@@ -51,7 +46,7 @@ public class ServerNetter : SimpleNetter
 
     public new void Update()
     {
-        while (true)
+        while (m_ReceiveQueue.Count>0)
         {
             ReceiveObject receiveObject = null;
 
@@ -67,30 +62,25 @@ public class ServerNetter : SimpleNetter
                 }
                 continue;
             }
-            break;
         }
 
         for(int index = 0;index< m_ClientList.Count;index++)
         {
             m_ClientList[index].Update();
         }
+
+        BeginAccept();
     }
 
     public new void Close()
     {
+        for (int index = 0; index < m_ClientList.Count; index++)
+        {
+            m_ClientList[index].Close();
+        }
         base.Close();
-        m_ListenThread.Abort();
-        m_ListenThread.IsBackground = true;//关闭线程
     }
 
-    private void ReceiveClient()
-    {
-        while (true)
-        {
-            BeginAccept();  
-            Thread.Sleep(1000);//每隔1s检测 有没有连接我            
-        }
-    }
 
     private void AcceptClient(IAsyncResult ar)
     {

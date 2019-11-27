@@ -15,7 +15,6 @@ public class SimpleNetter
     {
         Exception,
         Disconnect,
-
     }
 
     // 协议结构
@@ -107,7 +106,7 @@ public class SimpleNetter
 
     public void BeginReceive()
     {
-        m_Socket.BeginReceive(m_ByteBuffer, 0, m_SendBuffer.Length, SocketFlags.None, new AsyncCallback(OnRead), null);
+       m_Socket.BeginReceive(m_ByteBuffer, 0, m_SendBuffer.Length, SocketFlags.None, OnRead, null);
     }
 
     // -- 对外接口 --
@@ -298,22 +297,17 @@ public class SimpleNetter
     // 监听链接，读取字节流
     private void OnRead(IAsyncResult asr)
     {
-        int bytesRead = 0;
         if (m_Socket != null && m_Socket.Connected)
         {
             try
             {
                 //读取字节流到缓冲区
-                bytesRead = m_Socket.EndReceive(asr);
-                if (bytesRead < 4)
+                int bytesRead = m_Socket.EndReceive(asr);
+                if (bytesRead > 0)
                 {
-                    //包尺寸有问题
-                    SendNotification(ConnectNotificationType.Exception, "package size error");
-                    return;
+                    ReceiveMessage(bytesRead); //分析数据包内容，抛给逻辑层
+                    m_Socket.BeginReceive(m_ByteBuffer, m_ByteEndIndex, m_ByteBuffer.Length - m_ByteEndIndex, SocketFlags.None, OnRead, null);
                 }
-
-                ReceiveMessage(bytesRead); //分析数据包内容，抛给逻辑层
-                m_Socket.BeginReceive(m_ByteBuffer, m_ByteEndIndex, m_ByteBuffer.Length - m_ByteEndIndex, SocketFlags.None, new AsyncCallback(OnRead), null);
             }
             catch (Exception ex)
             {
