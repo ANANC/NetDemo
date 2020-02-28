@@ -42,7 +42,7 @@ public class SimpleNetter
 
     // -- 协议内容 -- 
     private byte[] m_SendBuffer = new byte[MAX_READ];           //缓冲区
-    private byte[] m_HeadBuffer = new byte[5];                  //包头
+    private byte[] m_HeadBuffer = new byte[13];                  //包头
     private byte[] m_HandleBuffer = null;                       //包体
     private int m_PackageIndex = 1;                             //包体编号
 
@@ -212,10 +212,21 @@ public class SimpleNetter
         // 包头填充
 
         // 2.快速校验码
-        WriteByteToBytes(m_CheckingCode, m_HeadBuffer, ref headSize);
+        //WriteByteToBytes(m_CheckingCode, m_HeadBuffer, ref headSize);
 
-        // 1.本次包的编号
-        WriteIntToBytes(m_PackageIndex++, m_HeadBuffer, ref headSize);
+        //// 1.本次包的编号
+        //WriteIntToBytes(m_PackageIndex++, m_HeadBuffer, ref headSize);
+
+        //cola测试
+        WriteByteToBytes((byte)'S', m_HeadBuffer, ref headSize);
+        WriteByteToBytes((byte)'G', m_HeadBuffer, ref headSize);
+        WriteByteToBytes((byte)'E', m_HeadBuffer, ref headSize);
+        WriteByteToBytes(0, m_HeadBuffer, ref headSize);//Encryption
+        WriteByteToBytes(0, m_HeadBuffer, ref headSize);//Compress
+        WriteIntToBytes(0, m_HeadBuffer, ref headSize);//CRC
+        WriteIntToBytes(1, m_HeadBuffer, ref headSize);//PackageIndex
+
+        //headSize = 13;
 
         WriteMessage(m_HeadBuffer, m_HandleBuffer, m_HandleBuffer.Length);
         return true;
@@ -224,20 +235,29 @@ public class SimpleNetter
     // 业务填充
     public bool SendBody<T>(T pack, int command, byte[] bytes, ref int length)
     {
-        CodedOutputStream output = new CodedOutputStream(bytes);
+        //CodedOutputStream output = new CodedOutputStream(bytes);
 
-        //协议代号
-        output.WriteInt32(command);
+        ////协议代号
+        //output.WriteInt32(command);
 
-        //写入包内容
+        ////写入包内容
+        //IMessage message = pack as IMessage;
+        //message.WriteTo(output);
+
+        ////包长度
+        //length = (int)output.Position;
+
+        //output.Dispose();
+
+        int index = 0;
+        WriteIntToBytes(command, bytes, ref index);
         IMessage message = pack as IMessage;
-        message.WriteTo(output);
-
-        //包长度
-        length = (int)output.Position;
-
-        output.Dispose();
-
+        byte[] messageBytes = message.ToByteArray();
+        for(int i = 0;i < messageBytes.Length;i++)
+        {
+            WriteByteToBytes(messageBytes[i], bytes, ref index);
+        }
+        length = index;
         return true;
     }
 
@@ -357,6 +377,7 @@ public class SimpleNetter
             {
                 SendNotification(ConnectNotificationType.Exception, "Package Head Lenght Field Error : " + messageLen.ToString());
                 Close();
+                break;
             }
 
             mainingBytesLength = m_ByteEndIndex - m_ByteFirstIndex;
@@ -382,14 +403,17 @@ public class SimpleNetter
         // 包头解析
 
         // 1.快速校验码
-        byte checkingCode = ReadByteFromBytes(bytes, ref offset);
-        if (!checkingCode.Equals(m_CheckingCode))
-        {
-            return "ReadPackage Failed , CheckingCode Is Incorrect.";
-        }
+        //byte checkingCode = ReadByteFromBytes(bytes, ref offset);
+        //if (!checkingCode.Equals(m_CheckingCode))
+        //{
+        //    return "ReadPackage Failed , CheckingCode Is Incorrect.";
+        //}
 
         // 2.本次包的编号
-        int packageID = ReadIntFromBytes(bytes, ref offset);
+        //int packageID = ReadIntFromBytes(bytes, ref offset);
+
+        // cola - 测试
+        offset += 13;
 
         m_HandleBuffer = new byte[length - (offset - dwStartOffset)];
         Array.Copy(bytes, offset, m_HandleBuffer, 0, m_HandleBuffer.Length);
@@ -407,8 +431,11 @@ public class SimpleNetter
     // 解析包体
     private string ReadBody(byte[] bytes, int offset, int length)
     {
-        CodedInputStream input = new CodedInputStream(bytes, offset, length);
-        int command = input.ReadInt32();
+       // CodedInputStream input = new CodedInputStream(bytes, offset, length);
+
+        int command = ReadIntFromBytes(bytes, ref offset);
+
+       // int command = input.ReadInt32();
         MessageParser messageParser = null;
 
         //得到协议的解释器
@@ -418,7 +445,7 @@ public class SimpleNetter
         }
 
         //字节转为数据结构
-        IMessage message = messageParser.ParseFrom(bytes, (int)input.Position, (int)(length - input.Position));
+        IMessage message = messageParser.ParseFrom(bytes, offset, (int)(length - offset));
 
         //添加到处理队列中
         ReceiveObject receiveObject = new ReceiveObject();
@@ -426,7 +453,7 @@ public class SimpleNetter
         receiveObject.message = message;
         m_ReceiveQueue.Enqueue(receiveObject);
 
-        input.Dispose();
+       // input.Dispose();
         return string.Empty;
     }
 

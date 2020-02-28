@@ -5,5 +5,5 @@ using UnityEngine;
 public static class Define 
 {
     public static string HOST = "127.0.0.1";
-    public static int PORT = 8220;
+    public static int PORT = 7121;
 }

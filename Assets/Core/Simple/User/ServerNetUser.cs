@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using System;
+using UnityEngine;
 
 public class ServerNetUser 
 {
@@ -41,7 +42,7 @@ public class ServerNetUser
         Msg.C2G.AuthReq authReq = message as Msg.C2G.AuthReq;
 
         Show("客户端请求认证:"+ clientId);
-
+        
         SendAuthRsp(clientId);
     }
 
@@ -79,6 +80,8 @@ public class ServerNetUser
         {
             m_ContentShow(content);
         }
+
+        Debug.Log("Server:"+content);
     }
 
 }
